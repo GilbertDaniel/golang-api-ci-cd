@@ -1,12 +1,10 @@
-name: Docker Build and Push to GHCR
+name: CI/CD Pipeline for Golang API
 
-# Trigger the workflow on pushes to the main branch
 on:
   push:
     branches:
       - main
 
-# Define the jobs
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -14,20 +12,44 @@ jobs:
     steps:
       # Step 1: Checkout the repository
       - name: Checkout code
-        uses: actions/checkout@v3 # Already up to date and supports Node.js 20
+        uses: actions/checkout@v3
 
-      # Step 2: Log in to GitHub Container Registry using the Personal Access Token
+      # Step 2: Log in to GitHub Container Registry
       - name: Log in to GitHub Container Registry
         run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      # Step 3: Set up Docker Buildx (make sure to use v3 for Node.js 20 support)
+      # Step 3: Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       # Step 4: Build the Docker image
       - name: Build the Docker image
-        run: docker build -t ghcr.io/gilbertdaniel/my-golang-api:latest .
+        run: docker build -t ghcr.io/gilbertdaniel/golang-api-ci-cd/my-golang-api:latest .
 
       # Step 5: Push the Docker image to GitHub Container Registry
       - name: Push Docker image to GitHub Container Registry
-        run: docker push ghcr.io/gilbertdaniel/my-golang-api:latest
+        run: docker push ghcr.io/gilbertdaniel/golang-api-ci-cd/my-golang-api:latest
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 6: SSH into the EC2 instance and deploy the Docker container
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            # Pull the latest Docker image
+            docker pull ghcr.io/gilbertdaniel/golang-api-ci-cd/my-golang-api:latest
+
+            # Stop and remove the existing container if it's running
+            docker stop my-golang-api || true
+            docker rm my-golang-api || true
+
+            # Run a new container with the updated image
+            docker run -d --name my-golang-api -p 8080:8080 ghcr.io/gilbertdaniel/golang-api-ci-cd/my-golang-api:latest
