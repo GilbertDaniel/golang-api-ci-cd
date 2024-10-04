@@ -47,11 +47,13 @@ jobs:
             # Authenticate with GitHub Container Registry
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
+            # Remove old docker image
+            docker image prune -af
+
             # Pull the latest Docker image
             docker pull ghcr.io/gilbertdaniel/golang-api-ci-cd/my-golang-api:latest
 
-            # Stop and remove the existing container if it's running
-            docker image prune
+            # Stop and remove the existing container if it's running            
             docker stop my-golang-api || true
             docker rm my-golang-api || true
 
