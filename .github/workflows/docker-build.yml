@@ -51,6 +51,7 @@ jobs:
             docker pull ghcr.io/gilbertdaniel/golang-api-ci-cd/my-golang-api:latest
 
             # Stop and remove the existing container if it's running
+            docker image prune
             docker stop my-golang-api || true
             docker rm my-golang-api || true
 
