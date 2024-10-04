@@ -26,8 +26,8 @@ jobs:
 
       # Step 4: Build the Docker image
       - name: Build the Docker image
-        run: docker build -t ghcr.io/${{ github.repository_owner }}/my-golang-api:latest .
+        run: docker build -t ghcr.io/gilbertdaniel/my-golang-api:latest .
 
       # Step 5: Push the Docker image to GitHub Container Registry
       - name: Push Docker image to GitHub Container Registry
-        run: docker push ghcr.io/${{ github.repository_owner }}/my-golang-api:latest
+        run: docker push ghcr.io/gilbertdaniel/my-golang-api:latest
