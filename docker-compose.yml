@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   golang-api:
-    image: ghcr.io/gilbertdaniel/my-golang-api:latest
+    image: ghcr.io/gilbertdaniel/golang-api-ci-cd/my-golang-api:latest
     ports:
       - "8080:8080"
     networks:
