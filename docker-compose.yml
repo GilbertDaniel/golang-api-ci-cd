@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  golang-api:
+    image: ghcr.io/${GITHUB_ACTOR}/my-golang-api:latest
+    ports:
+      - "8080:8080"
+    networks:
+      - golang-api-net
+    restart: unless-stopped
+
+networks:
+  golang-api-net:
+    driver: bridge

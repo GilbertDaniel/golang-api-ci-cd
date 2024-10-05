@@ -30,32 +30,52 @@ jobs:
       - name: Push Docker image to GitHub Container Registry
         run: docker push ghcr.io/gilbertdaniel/golang-api-ci-cd/my-golang-api:latest
 
+  # deploy:
+  #   needs: build
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #     # Step 6: SSH into the EC2 instance and deploy the Docker container
+  #     - name: Deploy to EC2
+  #       uses: appleboy/ssh-action@v0.1.6
+  #       with:
+  #         host: ${{ secrets.EC2_HOST }}
+  #         username: ${{ secrets.EC2_USER }}
+  #         key: ${{ secrets.EC2_SSH_KEY }}
+  #         port: 22
+  #         script: |
+  #           # Authenticate with GitHub Container Registry
+  #           echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+  #           # Remove old docker image
+  #           docker image prune -af
+
+  #           # Pull the latest Docker image
+  #           docker pull ghcr.io/gilbertdaniel/golang-api-ci-cd/my-golang-api:latest
+
+  #           # Stop and remove the existing container if it's running
+  #           docker stop my-golang-api || true
+  #           docker rm my-golang-api || true
+
+  #           # Run a new container with the updated image
+  #           docker run -d --name my-golang-api -p 8080:8080 ghcr.io/gilbertdaniel/golang-api-ci-cd/my-golang-api:latest
+
   deploy:
-    needs: build
     runs-on: ubuntu-latest
-
+    needs: build
     steps:
-      # Step 6: SSH into the EC2 instance and deploy the Docker container
-      - name: Deploy to EC2
-        uses: appleboy/ssh-action@v0.1.6
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.3
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: 22
-          script: |
-            # Authenticate with GitHub Container Registry
-            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
-            # Remove old docker image
-            docker image prune -af
-
-            # Pull the latest Docker image
-            docker pull ghcr.io/gilbertdaniel/golang-api-ci-cd/my-golang-api:latest
-
-            # Stop and remove the existing container if it's running            
-            docker stop my-golang-api || true
-            docker rm my-golang-api || true
-
-            # Run a new container with the updated image
-            docker run -d --name my-golang-api -p 8080:8080 ghcr.io/gilbertdaniel/golang-api-ci-cd/my-golang-api:latest
+      - name: Deploy to EC2 using Docker Compose
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+          cd /home/golang-api
+          docker-compose pull
+          docker-compose up -d
+          EOF
