@@ -76,6 +76,7 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
           cd /home/golang-api
-          pwd          
+          pwd
+          docker-compose -f /home/golang-api/docker-compose.yml down -v         
           docker-compose -f /home/golang-api/docker-compose.yml up -d
           EOF
